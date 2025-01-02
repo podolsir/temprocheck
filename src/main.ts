@@ -5,17 +5,17 @@ import { questionIndex } from "./questions";
 export function createQuestion(q: QuestionData) {
     const mainElement = document.createElement("div");
     mainElement.setAttribute("id", q.id);
-    mainElement.classList.add("tpc-question");
+    mainElement.classList.add("tpc-question", "border", "border-dark-subtle", "rounded-2");
     mainElement.dataset.tpcSelectedAnswerCode = "";
 
-    mainElement.innerHTML = `<div class="d-flex flex-row tpc-q-header">
+    mainElement.innerHTML = `<div class="bg-dark-subtle d-flex flex-row p-1 tpc-q-header">
             <span class="tpc-q-heading">${q.heading}</span>
-            <span class="ms-auto tpc-q-icon"><i class="bi bi-question-circle-fill"></i></button>
+            <span class="ms-auto tpc-q-icon"></span>
          </div>
 
         <div class="collapse show">
-            <div class="tpc-q-question">${q.question}</div>
-            <div class="tpc-q-answerlist d-flex flex-column gap-1"></div>
+            <div class="p-1 tpc-q-question">${q.question}</div>
+            <div class="tpc-q-answerlist d-flex flex-column gap-1 p-1"></div>
         </div>
     `;
 
@@ -40,8 +40,12 @@ export function createQuestion(q: QuestionData) {
 }
 
 function setIcon(tpcQuestionElement: HTMLElement, iconName: string) {
-    tpcQuestionElement.querySelector(".tpc-q-icon")!.innerHTML =
-        `<i class="bi bi-${iconName}"></i>`;
+    const icon = tpcQuestionElement.querySelector(".tpc-q-icon")!;
+    if (iconName != "") {
+        icon.innerHTML = `<i class="bi bi-${iconName}"></i>`;
+    } else {
+        icon.innerHTML = "";
+    }
 }
 
 const stack: HTMLDivElement[] = [];
@@ -63,7 +67,7 @@ const handleEdit = (event: Event) => {
 
     const target = stack[stack.length - 1];
 
-    setIcon(target, "question-circle-fill");
+    setIcon(target, "");
     new bootstrap.Collapse(target.querySelector(".collapse")!, {
         toggle: false,
     }).show();
@@ -71,6 +75,8 @@ const handleEdit = (event: Event) => {
     const header = target.querySelector(".tpc-q-header")!;
 
     header.classList.remove("btn", "btn-secondary");
+    header.classList.add("bg-dark-subtle");
+    target.classList.add("border");
     header.removeEventListener("click", handleEdit);
     header.querySelector(".tpc-q-heading")!.innerHTML = `${question.heading}`;
 };
@@ -89,9 +95,11 @@ const handleAnswer = (event: Event) => {
     target.removeEventListener("change", handleAnswer);
     const header = target.querySelector(".tpc-q-header")!;
     header.classList.add("btn", "btn-secondary");
+    header.classList.remove("bg-dark-subtle");
+    target.classList.remove("border");
     header.addEventListener("click", handleEdit);
     header.querySelector(".tpc-q-heading")!.innerHTML =
-        `${question.heading}: ${selectedAnswer.short}`;
+        `<small>${question.heading}:</small> ${selectedAnswer.short}`;
 
     const next = selectedAnswer.nextQuestion;
     if (next != "_COMPLETE") {
