@@ -1,6 +1,6 @@
 export enum Result {
-    YES   = "YES",
-    NO    = "NO",
+    YES = "YES",
+    NO = "NO",
     MAYBE = "MAYBE",
 }
 

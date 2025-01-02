@@ -1,6 +1,6 @@
-import bootstrap from 'bootstrap';
-import { QuestionData, Result, Answer } from './types';
-import { questionIndex } from './questions';
+import bootstrap from "bootstrap";
+import { QuestionData, Result, Answer } from "./types";
+import { questionIndex } from "./questions";
 
 export function createQuestion(q: QuestionData) {
     const mainElement = document.createElement("div");
@@ -8,8 +8,7 @@ export function createQuestion(q: QuestionData) {
     mainElement.classList.add("tpc-question");
     mainElement.dataset.tpcSelectedAnswerCode = "";
 
-    mainElement.innerHTML = 
-        `<div class="d-flex flex-row tpc-q-header">
+    mainElement.innerHTML = `<div class="d-flex flex-row tpc-q-header">
             <span class="tpc-q-heading">${q.heading}</span>
             <span class="ms-auto tpc-q-icon"><i class="bi bi-question-circle-fill"></i></button>
          </div>
@@ -25,11 +24,11 @@ export function createQuestion(q: QuestionData) {
         mainElement.dataset.tpcSelectedAnswerCode = value;
         event.stopPropagation();
         mainElement.dispatchEvent(new Event("change"));
-    }
+    };
 
     const answerList = mainElement.querySelector(".tpc-q-answerlist");
     for (const a of q.answers) {
-        const b = document.createElement("button")
+        const b = document.createElement("button");
         b.classList.add("btn", "btn-primary");
         b.dataset.tpcAnswerCode = a.code;
         b.innerText = a.long;
@@ -41,7 +40,8 @@ export function createQuestion(q: QuestionData) {
 }
 
 function setIcon(tpcQuestionElement: HTMLElement, iconName: string) {
-    tpcQuestionElement.querySelector(".tpc-q-icon")!.innerHTML = `<i class="bi bi-${iconName}"></i>`
+    tpcQuestionElement.querySelector(".tpc-q-icon")!.innerHTML =
+        `<i class="bi bi-${iconName}"></i>`;
 }
 
 const stack: HTMLDivElement[] = [];
@@ -57,21 +57,23 @@ const handleEdit = (event: Event) => {
     while (index > 0 && stack[index].id != mainElement.id) {
         const removed = stack.pop()!;
         answers.delete(removed.id);
-        document.getElementById('questionsContainer')!.removeChild(removed);
+        document.getElementById("questionsContainer")!.removeChild(removed);
         index--;
     }
 
     const target = stack[stack.length - 1];
 
     setIcon(target, "question-circle-fill");
-    new bootstrap.Collapse(target.querySelector(".collapse")!, {toggle: false}).show();
+    new bootstrap.Collapse(target.querySelector(".collapse")!, {
+        toggle: false,
+    }).show();
     target.addEventListener("change", handleAnswer);
     const header = target.querySelector(".tpc-q-header")!;
 
-    header.classList.remove("btn", "btn-secondary")
-    header.removeEventListener("click", handleEdit)
+    header.classList.remove("btn", "btn-secondary");
+    header.removeEventListener("click", handleEdit);
     header.querySelector(".tpc-q-heading")!.innerHTML = `${question.heading}`;
-}
+};
 
 const handleAnswer = (event: Event) => {
     const target = event.target as HTMLDivElement;
@@ -81,32 +83,35 @@ const handleAnswer = (event: Event) => {
     answers.set(target.id, selectedAnswer);
 
     setIcon(target, "pencil-fill");
-    new bootstrap.Collapse(target.querySelector(".collapse")!, {toggle: false}).hide();
+    new bootstrap.Collapse(target.querySelector(".collapse")!, {
+        toggle: false,
+    }).hide();
     target.removeEventListener("change", handleAnswer);
     const header = target.querySelector(".tpc-q-header")!;
-    header.classList.add("btn", "btn-secondary")
-    header.addEventListener("click", handleEdit)
-    header.querySelector(".tpc-q-heading")!.innerHTML = `${question.heading}: ${selectedAnswer.short}`; 
+    header.classList.add("btn", "btn-secondary");
+    header.addEventListener("click", handleEdit);
+    header.querySelector(".tpc-q-heading")!.innerHTML =
+        `${question.heading}: ${selectedAnswer.short}`;
 
     const next = selectedAnswer.nextQuestion;
     if (next != "_COMPLETE") {
         const nq = createQuestion(questionIndex[next]);
         stack.push(nq);
-        document.getElementById('questionsContainer')!.appendChild(nq);
+        document.getElementById("questionsContainer")!.appendChild(nq);
         nq.addEventListener("change", handleAnswer);
     } else {
         const result = runEvaluation();
         displayEvaluation(result);
     }
-}
+};
 
 function runEvaluation() {
     const arr = Array.from(answers.values());
     const score = {
-        YES:    arr.map(x => x.weight.YES  ).reduce((sum, val) => sum + val, 0),
-        NO:     arr.map(x => x.weight.NO   ).reduce((sum, val) => sum + val, 0),
-        MAYBE:  arr.map(x => x.weight.MAYBE).reduce((sum, val) => sum + val, 0),
-    }
+        YES: arr.map((x) => x.weight.YES).reduce((sum, val) => sum + val, 0),
+        NO: arr.map((x) => x.weight.NO).reduce((sum, val) => sum + val, 0),
+        MAYBE: arr.map((x) => x.weight.MAYBE).reduce((sum, val) => sum + val, 0),
+    };
     // sort in descending order, pick first item.
     const result = Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
     return result as Result;
@@ -121,8 +126,8 @@ function displayEvaluation(result: Result) {
 }
 
 document.addEventListener("DOMContentLoaded", (e) => {
-    const initialQuestion = createQuestion(questionIndex["location"])
+    const initialQuestion = createQuestion(questionIndex["location"]);
     stack.push(initialQuestion);
-    document.getElementById('questionsContainer')!.appendChild(initialQuestion);
+    document.getElementById("questionsContainer")!.appendChild(initialQuestion);
     initialQuestion.addEventListener("change", handleAnswer);
 });
