@@ -1,6 +1,6 @@
 import bootstrap from "bootstrap";
 import { QuestionData, Result, Answer } from "./types";
-import { questionIndex } from "./questions";
+import { questionIndex, runEvaluation } from "./questions";
 
 export function createQuestion(q: QuestionData) {
     const mainElement = document.createElement("div");
@@ -49,7 +49,7 @@ function setIcon(tpcQuestionElement: HTMLElement, iconName: string) {
 }
 
 const stack: HTMLDivElement[] = [];
-const answers: Map<String, Answer> = new Map<string, Answer>();
+const answers: Map<string, Answer> = new Map<string, Answer>();
 
 const handleEdit = (event: Event) => {
     clearEvaluation();
@@ -101,29 +101,17 @@ const handleAnswer = (event: Event) => {
     header.querySelector(".tpc-q-heading")!.innerHTML =
         `<small>${question.heading}:</small> ${selectedAnswer.short}`;
 
-    const next = selectedAnswer.nextQuestion;
+    const next = selectedAnswer.nextQuestion(answers);
     if (next != "_COMPLETE") {
         const nq = createQuestion(questionIndex[next]);
         stack.push(nq);
         document.getElementById("questionsContainer")!.appendChild(nq);
         nq.addEventListener("change", handleAnswer);
     } else {
-        const result = runEvaluation();
+        const result = runEvaluation(answers);
         displayEvaluation(result);
     }
 };
-
-function runEvaluation() {
-    const arr = Array.from(answers.values());
-    const score = {
-        YES: arr.map((x) => x.weight.YES).reduce((sum, val) => sum + val, 0),
-        NO: arr.map((x) => x.weight.NO).reduce((sum, val) => sum + val, 0),
-        MAYBE: arr.map((x) => x.weight.MAYBE).reduce((sum, val) => sum + val, 0),
-    };
-    // sort in descending order, pick first item.
-    const result = Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
-    return result as Result;
-}
 
 function clearEvaluation() {
     document.getElementById("resultContainer")!.innerHTML = "";
