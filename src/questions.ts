@@ -3,8 +3,8 @@ import { QuestionData } from "./types";
 const questions: QuestionData[] = [
     {
         id: "location",
-        heading: "Место проживания",
-        question: "Где вы постоянно проживали 24 февраля 2022 года?",
+        heading: "Местонахождение на 24.02.2022",
+        question: "Где вы находились 24 февраля 2022 года?",
         answers: [
             {
                 code: "LOCATION_UA",
@@ -24,8 +24,64 @@ const questions: QuestionData[] = [
                 code: "LOCATION_OTHER",
                 long: "В другой стране",
                 short: "Другая страна",
+                nextQuestion: "otherCountryTerm",
+                weight: { YES: 0, NO: 100, MAYBE: 0 },
+            },
+        ],
+    },
+    {
+        id: "otherCountryTerm",
+        heading: "Время выезда из Украины",
+        question: "Когда вы последний раз выехали из Украины до начала вторжения?",
+        answers: [
+            {
+                code: "TERM_LESS_90",
+                long: "Между 22.11.2021 и 24.02.2022",
+                short: "После 22.11.2021",
+                nextQuestion: "otherCountryReason",
+                weight: { YES: 0, NO: 0, MAYBE: 0 },
+            },
+            {
+                code: "TERM_MORE_90",
+                long: "До 22.11.2021",
+                short: "До 22.11.2021",
+                nextQuestion: "citizenship",
+                weight: { YES: 0, NO: 0, MAYBE: 1000 },
+            },
+        ],
+    },
+    {
+        id: "otherCountryReason",
+        heading: "Основания для выезда",
+        question: "По каким документам вы выехали в другую страну до 24.02.2022",
+        answers: [
+            {
+                code: "REASON_TOURISM",
+                long: "Туристическая или другая краткосрочная виза",
+                short: "Турвиза",
+                nextQuestion: "citizenship",
+                weight: { YES: 100, NO: 0, MAYBE: 0 },
+            },
+            {
+                code: "REASON_WORK",
+                long: "Рабочая виза или ВНЖ",
+                short: "Рабочая виза",
                 nextQuestion: "citizenship",
                 weight: { YES: 0, NO: 1000, MAYBE: 0 },
+            },
+            {
+                code: "REASON_STUDY",
+                long: "Студенческая или другая учебная виза",
+                short: "Учебная виза",
+                nextQuestion: "citizenship",
+                weight: { YES: 0, NO: 1000, MAYBE: 0 },
+            },
+            {
+                code: "REASON_OTHER",
+                long: "Другие документы",
+                short: "Другое",
+                nextQuestion: "citizenship",
+                weight: { YES: 0, NO: 0, MAYBE: 500 },
             },
         ],
     },
