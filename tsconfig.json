@@ -1,0 +1,7 @@
+{
+    "compilerOptions": {
+        "lib": ["dom", "es2019"],
+    },
+    "extends": "@tsconfig/recommended/tsconfig.json",
+    "$schema": "https://json.schemastore.org/tsconfig"
+}

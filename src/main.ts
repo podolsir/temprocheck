@@ -1,10 +1,23 @@
 import bootstrap from 'bootstrap';
 
+enum Result {
+    YES   = "YES",
+    NO    = "NO",
+    MAYBE = "MAYBE",
+}
+
 interface Answer {
     readonly code: string;
     readonly long: string;
     readonly short: string;
     readonly nextQuestion: string;
+    readonly weight: Weight;
+}
+
+interface Weight {
+    YES: number;
+    NO: number;
+    MAYBE: number;
 }
 
 interface QuestionData {
@@ -25,18 +38,21 @@ const questions: QuestionData[] = [
                 long: "В Украине (включая любые оккупированные территории)",
                 short: "Украина",
                 nextQuestion: "citizenship",
+                weight: {YES: 100, NO: 0, MAYBE: 0},
             },
             { 
                 code: "LOCATION_DE", 
                 long: "В Германии", 
                 short: "Германия", 
                 nextQuestion: "germanPermit",
+                weight: {YES: 100, NO: 0, MAYBE: 0},
             },
             { 
                 code: "LOCATION_OTHER",
                 long: "В другой стране", 
                 short: "Другая страна",
                 nextQuestion: "citizenship",
+                weight: {YES: 0, NO: 1000, MAYBE: 0},
             },
         ],
     },
@@ -47,44 +63,101 @@ const questions: QuestionData[] = [
         answers: [
             { 
                 code: "CITIZENSHIP_UA", 
-                long: "Только Украина", short: "Украина",
-                nextQuestion: "_COMPLETE",
+                long: "Только Украина",
+                short: "Украина",
+                nextQuestion: "secondLocation",
+                weight: {YES: 100, NO: 0, MAYBE: 0},
             },
             {
                 code: "CITIZENSHIP_UA_DUAL_EU",
                 long: "Украина + страна ЕС",
                 short: "Украина + страна ЕС",
-                nextQuestion: "_COMPLETE",
+                nextQuestion: "secondLocation",
+                weight: {YES: 0, NO: 2000, MAYBE: 0},
             },
             { 
                 code: "CITIZENSHIP_UA_DUAL_3C",
                 long: "Украина + страна вне ЕС",
                 short: "Украина + страна вне ЕС",
-                nextQuestion: "_COMPLETE",
+                nextQuestion: "secondLocation",
+                weight: {YES: 0, NO: 0, MAYBE: 1000},
             },
             { 
                 code: "CITIZENSHIP_EU",
                 long: "Страна ЕС",
                 short: "Страна ЕС",
-                nextQuestion: "_COMPLETE",
+                nextQuestion: "secondLocation",
+                weight: {YES: 0, NO: 2000, MAYBE: 0},
             },
             { 
-                code: "CITIZENSHIP_3C_PERM",
+                code: "CITIZENSHIP_3C_TEMP",
                 long: "Страна вне ЕС и ВНЖ Украины",
                 short: "Страна вне ЕС и ВНЖ Украины",
-                nextQuestion: "_COMPLETE",
+                nextQuestion: "secondLocation",
+                weight: {YES: 0, NO: 100, MAYBE: 0},
             },
             {
-                code: "CITIZENSHIP_3C_TEMP", 
+                code: "CITIZENSHIP_3C_PERM", 
                 long: "Страна вне ЕС и ПМЖ Украины",
                 short: "Страна вне ЕС и ПМЖ Украины",
-                nextQuestion: "_COMPLETE",
+                nextQuestion: "secondLocation",
+                weight: {YES: 100, NO: 0, MAYBE: 0},
             },
             {
                 code: "CITIZENSHIP_3C",
-                long: "Страна вне ЕС (нет ПМЖ и ВНЖ Украины)",
+                long: "Страна вне ЕС (нет ПМЖ или ВНЖ Украины)",
                 short: "Страна вне ЕС",
+                weight: {YES: 0, NO: 100, MAYBE: 0},
+                nextQuestion: "secondLocation",
+            },
+        ]
+    },
+    {
+        id: "germanPermit",
+        heading: "ВНЖ в Германии",
+        question: "Есть ли у вас Aufenthaltstitel, выданный до 24.02.2022, и можете ли вы его продлить?",
+        answers: [
+            {
+                code: "GERMAN_PERMIT_NO",
+                long: "Нет",
+                short: "Нет",
+                nextQuestion: "citizenship",
+                weight: {YES: 0, NO: 2000, MAYBE: 0},
+            },
+            {
+                code: "GERMAN_PERMIT_YES_IMPOSSIBLE",
+                long: "Есть, не могу продлить",
+                short: "Да, продление невозможно",
+                nextQuestion: "citizenship",
+                weight: {YES: 100, NO: 0, MAYBE: 0},
+            },
+            {
+                code: "GERMAN_PERMIT_YES_POSSIBLE",
+                long: "Есть, могу продлить",
+                short: "Да, продление возможно",
+                nextQuestion: "citizenship",
+                weight: {YES: 0, NO: 2000, MAYBE: 0},
+            },
+        ]
+    },
+    {
+        id: "secondLocation",
+        heading: "Страны вне ЕС",
+        question: "Проживали ли вы после 24 февраля 2022 в любых странах кроме Украины и ЕС?",
+        answers: [
+            {
+                code: "LOCATION2_EU_UA",
+                short: "Нет",
+                long: "Нет, только в Украине и странах ЕС",
                 nextQuestion: "_COMPLETE",
+                weight: {YES: 100, NO: 0, MAYBE: 0},
+            },
+            {
+                code: "LOCATION2_3С",
+                short: "Да",
+                long: "Да, проживал в стране вне ЕС",
+                nextQuestion: "_COMPLETE",
+                weight: {YES: 0, NO: 2000, MAYBE: 0},
             },
         ]
     }
@@ -135,16 +208,18 @@ function setIcon(tpcQuestionElement: HTMLElement, iconName: string) {
 }
 
 const stack: HTMLDivElement[] = [];
-const answers: {[k: string]: string} = {};
+const answers: Map<String, Answer> = new Map<string, Answer>();
 
 const handleEdit = (event: Event) => {
+    clearEvaluation();
+
     const mainElement = (event.target as HTMLElement).closest(".tpc-question")!;
     const question = questionIndex[mainElement.id];
 
     let index = stack.length - 1;
     while (index > 0 && stack[index].id != mainElement.id) {
         const removed = stack.pop()!;
-        answers[removed.id] = "";
+        answers.delete(removed.id);
         document.getElementById('questionsContainer')!.removeChild(removed);
         index--;
     }
@@ -152,7 +227,7 @@ const handleEdit = (event: Event) => {
     const target = stack[stack.length - 1];
 
     setIcon(target, "question-circle-fill");
-    new bootstrap.Collapse(target.querySelector(".collapse"), {toggle: false}).show();
+    new bootstrap.Collapse(target.querySelector(".collapse")!, {toggle: false}).show();
     target.addEventListener("change", handleAnswer);
     const header = target.querySelector(".tpc-q-header")!;
 
@@ -163,12 +238,13 @@ const handleEdit = (event: Event) => {
 
 const handleAnswer = (event: Event) => {
     const target = event.target as HTMLDivElement;
-    answers[target.id] = target.dataset.tpcSelectedAnswerCode as string;
+    const answerCode = target.dataset.tpcSelectedAnswerCode as string;
     const question = questionIndex[target.id];
-    const selectedAnswer = question.answers.find((x) => x.code == answers[target.id])!;
+    const selectedAnswer = question.answers.find((x) => x.code == answerCode)!;
+    answers.set(target.id, selectedAnswer);
 
     setIcon(target, "pencil-fill");
-    new bootstrap.Collapse(target.querySelector(".collapse"), {toggle: false}).hide();
+    new bootstrap.Collapse(target.querySelector(".collapse")!, {toggle: false}).hide();
     target.removeEventListener("change", handleAnswer);
     const header = target.querySelector(".tpc-q-header")!;
     header.classList.add("btn", "btn-secondary")
@@ -181,7 +257,30 @@ const handleAnswer = (event: Event) => {
         stack.push(nq);
         document.getElementById('questionsContainer')!.appendChild(nq);
         nq.addEventListener("change", handleAnswer);
+    } else {
+        const result = runEvaluation();
+        displayEvaluation(result);
     }
+}
+
+function runEvaluation() {
+    const arr = Array.from(answers.values());
+    const score = {
+        YES:    arr.map(x => x.weight.YES  ).reduce((sum, val) => sum + val, 0),
+        NO:     arr.map(x => x.weight.NO   ).reduce((sum, val) => sum + val, 0),
+        MAYBE:  arr.map(x => x.weight.MAYBE).reduce((sum, val) => sum + val, 0),
+    }
+    // sort in descending order, pick first item.
+    const result = Object.entries(score).sort((a, b) => b[1] - a[1])[0][0];
+    return result as Result;
+}
+
+function clearEvaluation() {
+    document.getElementById("resultContainer")!.innerHTML = "";
+}
+
+function displayEvaluation(result: Result) {
+    document.getElementById("resultContainer")!.innerHTML = result;
 }
 
 document.addEventListener("DOMContentLoaded", (e) => {
