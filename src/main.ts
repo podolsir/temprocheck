@@ -16,7 +16,7 @@ export function createQuestion(q: QuestionData) {
 
         <div class="collapse show">
             <div class="tpc-q-question">${q.question}</div>
-            <div class="tpc-q-answerlist d-flex flex-column"></div>
+            <div class="tpc-q-answerlist d-flex flex-column gap-1"></div>
         </div>
     `;
 
