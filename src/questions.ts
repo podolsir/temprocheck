@@ -138,7 +138,7 @@ const questions: QuestionData[] = [
                 long: "Страна вне ЕС и ВНЖ Украины",
                 short: "Страна вне ЕС и ВНЖ Украины",
                 nextQuestion: () => "secondLocation",
-                weight: { YES: 0, NO: 100, MAYBE: 0 },
+                weight: { YES: 0, NO: 2000, MAYBE: 0 },
             },
             {
                 code: "CITIZENSHIP_3C_PERM",
