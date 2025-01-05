@@ -4,12 +4,18 @@ export enum Result {
     MAYBE = "MAYBE",
 }
 
+export interface Outcome {
+    result: Result;
+    notices: string[];
+}
+
 export interface Answer {
     readonly code: string;
     readonly long: string;
     readonly short: string;
     readonly nextQuestion: (answers: Map<string, Answer>) => string;
     readonly weight: Weight;
+    readonly outcome?: Outcome;
 }
 
 export interface Weight {

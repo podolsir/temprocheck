@@ -1,6 +1,6 @@
 import bootstrap from "bootstrap";
 import { QuestionData, Result, Answer } from "./types";
-import { questionIndex, runEvaluation } from "./questions";
+import { countAnswers, getNotices, questionIndex, runEvaluation } from "./questions";
 
 export function createQuestion(q: QuestionData) {
     const mainElement = document.createElement("div");
@@ -81,6 +81,40 @@ const handleEdit = (event: Event) => {
     header.querySelector(".tpc-q-heading")!.innerHTML = `${question.heading}`;
 };
 
+type StageResults = {
+    [key in "YES" | "NO" | "MAYBE"]: { text: string; alertClass: string };
+};
+
+const S1_RESULTS: StageResults = {
+    YES: {
+        text: "У вас скорее всего есть собственное право на временную защиту в Германии.",
+        alertClass: "alert-success",
+    },
+    MAYBE: {
+        text: "Невозможно предсказать, есть ли у вас собственнное право на временную защиту в Германии.",
+        alertClass: "alert-warning",
+    },
+    NO: {
+        text: "У вас скорее всего нет собственного права на временную защиту в Германии на основании ваших личных обстоятельств.",
+        alertClass: "alert-danger",
+    },
+};
+
+const S2_RESULTS = {
+    YES: {
+        text: "У вас скорее всего есть право на временную защиту в Германии, так как вы член семьи лица, имеющего право на временную защиту.",
+        alertClass: "alert-success",
+    },
+    MAYBE: {
+        text: "Несмотря на то, что вы член семьи лица, имеющего право на временную защиту, ваши шансы получить временную защиту невозможно предсказать.",
+        alertClass: "alert-warning",
+    },
+    NO: {
+        text: "У вас нет права на временную защиту в Германии на основании того, что вы член семьи лица, имеющего право на временную защиту.",
+        alertClass: "alert-danger",
+    },
+};
+
 const handleAnswer = (event: Event) => {
     const target = event.target as HTMLDivElement;
     const answerCode = target.dataset.tpcSelectedAnswerCode as string;
@@ -108,21 +142,58 @@ const handleAnswer = (event: Event) => {
         document.getElementById("questionsContainer")!.appendChild(nq);
         nq.addEventListener("change", handleAnswer);
     } else {
-        const result = runEvaluation(answers);
-        displayEvaluation(result);
+        const stage1result = runEvaluation(answers, 1);
+        const rc = document.getElementById("resultContainer")!;
+
+        rc.appendChild(createAnswer(stage1result, S1_RESULTS, 1));
+
+        let stage2result = undefined;
+        if (stage1result != Result.YES && countAnswers(answers, 2)) {
+            stage2result = runEvaluation(answers, 2);
+            rc.appendChild(createAnswer(stage2result, S2_RESULTS, 2));
+        }
     }
 };
+
+function createAnswer(r: Result, s: StageResults, stage: 1 | 2) {
+    const tree = (
+        document.getElementById("resultTemplate") as HTMLTemplateElement
+    ).content.cloneNode(true) as HTMLElement;
+
+    tree.querySelectorAll(".tpc-result-short").forEach((elem) => {
+        elem.innerHTML = s[r].text;
+        elem.classList.add(s[r].alertClass);
+    });
+
+    if (r == Result.YES) {
+        tree.querySelector(".tpc-denial-reasons")!.classList.add("d-none");
+    } else {
+        tree.querySelectorAll(".tpc-denial-reasons ul").forEach((elem) => {
+            for (const n of getNotices(answers, stage, [Result.NO, Result.MAYBE])) {
+                elem.innerHTML += `<li>${n}</li>`;
+            }
+        });
+    }
+
+    if (getNotices(answers, stage, [Result.YES]).length > 0) {
+        tree.querySelectorAll(".tpc-notices ul").forEach((elem) => {
+            for (const n of getNotices(answers, stage, [Result.YES])) {
+                elem.innerHTML += `<li>${n}</li>`;
+            }
+        });
+    } else {
+        tree.querySelector(".tpc-notices")!.classList.add("d-none");
+    }
+
+    return tree;
+}
 
 function clearEvaluation() {
     document.getElementById("resultContainer")!.innerHTML = "";
 }
 
-function displayEvaluation(result: Result) {
-    document.getElementById("resultContainer")!.innerHTML = result;
-}
-
 document.addEventListener("DOMContentLoaded", (e) => {
-    const initialQuestion = createQuestion(questionIndex["location"]);
+    const initialQuestion = createQuestion(questionIndex["stage1-location"]);
     stack.push(initialQuestion);
     document.getElementById("questionsContainer")!.appendChild(initialQuestion);
     initialQuestion.addEventListener("change", handleAnswer);
