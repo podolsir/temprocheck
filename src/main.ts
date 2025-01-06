@@ -81,36 +81,42 @@ const handleEdit = (event: Event) => {
     header.querySelector(".tpc-q-heading")!.innerHTML = `${question.heading}`;
 };
 
-type StageResults = {
-    [key in "YES" | "NO" | "MAYBE"]: { text: string; alertClass: string };
+type ResultDisplay = {
+    text: string;
+    alertClass: string;
 };
 
-const S1_RESULTS: StageResults = {
-    YES: {
+const COMBINED_RESULTS: { [key: string]: ResultDisplay } = {
+    YES_undefined: {
         text: "У вас скорее всего есть собственное право на временную защиту в Германии.",
         alertClass: "alert-success",
     },
-    MAYBE: {
-        text: "Невозможно предсказать, есть ли у вас собственнное право на временную защиту в Германии.",
-        alertClass: "alert-warning",
-    },
-    NO: {
-        text: "У вас скорее всего нет собственного права на временную защиту в Германии на основании ваших личных обстоятельств.",
+    NO_undefined: {
+        text: "У вас скорее всего нет права на временную защиту в Германии.",
         alertClass: "alert-danger",
     },
-};
-
-const S2_RESULTS = {
-    YES: {
-        text: "У вас скорее всего есть право на временную защиту в Германии, так как вы член семьи лица, имеющего право на временную защиту.",
+    MAYBE_YES: {
+        text: "Невозможно предсказать, есть ли у вас собственнное право на временную защиту в Германии, но вы скорее всего сможете получить временную защиту как член семьи обладателей такого права.",
         alertClass: "alert-success",
     },
-    MAYBE: {
-        text: "Несмотря на то, что вы член семьи лица, имеющего право на временную защиту, ваши шансы получить временную защиту невозможно предсказать.",
+    MAYBE_MAYBE: {
+        text: "Невозможно предсказать, есть ли у вас право на временную защиту в Германии.",
         alertClass: "alert-warning",
     },
-    NO: {
-        text: "У вас нет права на временную защиту в Германии на основании того, что вы член семьи лица, имеющего право на временную защиту.",
+    MAYBE_NO: {
+        text: "Невозможно предсказать, есть ли у вас собственное право на временную защиту в Германии. Также вы не можете получить временную защиту как член семьи обладателей такого права.",
+        alertClass: "alert-warning",
+    },
+    NO_YES: {
+        text: "У вас скорее всего нет собственного права на временную защиту в Германии, но вы скорее всего сможете получить временную защиту как член семьи обладателей такого права.",
+        alertClass: "alert-success",
+    },
+    NO_MAYBE: {
+        text: "У вас скорее всего нет собственного права на временную защиту в Германии. Ваши шансы получить временную защиту как член семьи обладателей такого права невозможно предсказать.",
+        alertClass: "alert-warning",
+    },
+    NO_NO: {
+        text: "У вас скорее всего нет права на временную защиту в Германии.",
         alertClass: "alert-danger",
     },
 };
@@ -143,41 +149,50 @@ const handleAnswer = (event: Event) => {
         nq.addEventListener("change", handleAnswer);
     } else {
         const stage1result = runEvaluation(answers, 1);
-        const rc = document.getElementById("resultContainer")!;
-
-        rc.appendChild(createResult(stage1result, S1_RESULTS, 1));
 
         let stage2result = undefined;
         if (stage1result != Result.YES && countAnswers(answers, 2)) {
             stage2result = runEvaluation(answers, 2);
-            rc.appendChild(createResult(stage2result, S2_RESULTS, 2));
         }
+
+        const key = `${stage1result}_${stage2result}`;
+
+        const rc = document.getElementById("resultContainer")!;
+
+        rc.appendChild(createResult(COMBINED_RESULTS[key]));
     }
 };
 
-function createResult(r: Result, s: StageResults, stage: 1 | 2) {
+function createResult(rd: ResultDisplay) {
     const tree = (
         document.getElementById("resultTemplate") as HTMLTemplateElement
     ).content.cloneNode(true) as HTMLElement;
 
     tree.querySelectorAll(".tpc-result-short").forEach((elem) => {
-        elem.innerHTML = s[r].text;
-        elem.classList.add(s[r].alertClass);
+        elem.innerHTML = rd.text;
+        elem.classList.add(rd.alertClass);
     });
 
-    if (r == Result.YES) {
-        tree.querySelector(".tpc-denial-reasons")!.classList.add("d-none");
-    } else {
+    const denials = getNotices(answers, 1, [Result.NO, Result.MAYBE]).concat(
+        getNotices(answers, 2, [Result.NO, Result.MAYBE]),
+    );
+    const notices = getNotices(answers, 1, [Result.YES]).concat(
+        getNotices(answers, 2, [Result.YES]),
+    );
+
+    if (denials.length > 0) {
         tree.querySelectorAll(".tpc-denial-reasons ul").forEach((elem) => {
-            for (const n of getNotices(answers, stage, [Result.NO, Result.MAYBE])) {
+            for (const n of denials) {
                 elem.innerHTML += `<li>${n}</li>`;
             }
         });
+    } else {
+        tree.querySelector(".tpc-denial-reasons")!.classList.add("d-none");
     }
 
-    if (getNotices(answers, stage, [Result.YES]).length > 0) {
+    if (notices.length > 0) {
         tree.querySelectorAll(".tpc-notices ul").forEach((elem) => {
-            for (const n of getNotices(answers, stage, [Result.YES])) {
+            for (const n of notices) {
                 elem.innerHTML += `<li>${n}</li>`;
             }
         });
