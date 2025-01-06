@@ -121,6 +121,10 @@ const COMBINED_RESULTS: { [key: string]: ResultDisplay } = {
     },
 };
 
+const DEFAULT_NOTICES = [
+    "Информация, предоставленная здесь, собрана волонтерами. Несмотря на тщательность ее обработки, авторы не могут дать никаких гарантий ее верности. Пользуйтесь этой информацией на свой страх и риск.",
+];
+
 const handleAnswer = (event: Event) => {
     const target = event.target as HTMLDivElement;
     const answerCode = target.dataset.tpcSelectedAnswerCode as string;
@@ -176,9 +180,9 @@ function createResult(rd: ResultDisplay) {
     const denials = getNotices(answers, 1, [Result.NO, Result.MAYBE]).concat(
         getNotices(answers, 2, [Result.NO, Result.MAYBE]),
     );
-    const notices = getNotices(answers, 1, [Result.YES]).concat(
-        getNotices(answers, 2, [Result.YES]),
-    );
+    const notices = getNotices(answers, 1, [Result.YES])
+        .concat(getNotices(answers, 2, [Result.YES]))
+        .concat(DEFAULT_NOTICES);
 
     if (denials.length > 0) {
         tree.querySelectorAll(".tpc-denial-reasons ul").forEach((elem) => {
