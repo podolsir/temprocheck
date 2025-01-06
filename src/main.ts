@@ -145,17 +145,17 @@ const handleAnswer = (event: Event) => {
         const stage1result = runEvaluation(answers, 1);
         const rc = document.getElementById("resultContainer")!;
 
-        rc.appendChild(createAnswer(stage1result, S1_RESULTS, 1));
+        rc.appendChild(createResult(stage1result, S1_RESULTS, 1));
 
         let stage2result = undefined;
         if (stage1result != Result.YES && countAnswers(answers, 2)) {
             stage2result = runEvaluation(answers, 2);
-            rc.appendChild(createAnswer(stage2result, S2_RESULTS, 2));
+            rc.appendChild(createResult(stage2result, S2_RESULTS, 2));
         }
     }
 };
 
-function createAnswer(r: Result, s: StageResults, stage: 1 | 2) {
+function createResult(r: Result, s: StageResults, stage: 1 | 2) {
     const tree = (
         document.getElementById("resultTemplate") as HTMLTemplateElement
     ).content.cloneNode(true) as HTMLElement;
