@@ -14,7 +14,6 @@ export interface Answer {
     readonly long: string;
     readonly short: string;
     readonly nextQuestion: (answers: Map<string, Answer>) => string;
-    readonly weight: Weight;
     readonly outcome?: Outcome;
 }
 
