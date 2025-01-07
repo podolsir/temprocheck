@@ -57,6 +57,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: github-pages
+          path: public
       - name: scp to netcup
         uses: appleboy/scp-action@v0.1.7
         with:
