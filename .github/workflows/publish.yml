@@ -60,7 +60,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: github-pages
-          path: public
+      - run: mkdir public
+      - run: tar -xvf artifact.tar -C public
       - name: scp to netcup
         uses: appleboy/scp-action@v0.1.7
         with:
