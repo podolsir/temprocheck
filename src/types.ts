@@ -17,12 +17,6 @@ export interface Answer {
     readonly outcome?: Outcome;
 }
 
-export interface Weight {
-    YES: number;
-    NO: number;
-    MAYBE: number;
-}
-
 export interface QuestionData {
     readonly id: string;
     readonly heading: string;
