@@ -11,8 +11,10 @@ export default {
     input: "src/main.ts",
     output: {
         file: "public/bundle.js",
+        name: "temprocheck",
         format: "iife",
         sourcemap: true,
+        globals: {"bootstrap": "bootstrap"},
     },
     external: ["bootstrap"],
     plugins: [
