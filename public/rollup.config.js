@@ -14,7 +14,7 @@ export default {
         name: "temprocheck",
         format: "iife",
         sourcemap: true,
-        globals: { bootstrap: "bootstrap" },
+        globals: {"bootstrap": "bootstrap"},
     },
     external: ["bootstrap"],
     plugins: [

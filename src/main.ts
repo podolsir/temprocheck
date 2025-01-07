@@ -84,45 +84,55 @@ const handleEdit = (event: Event) => {
 type ResultDisplay = {
     text: string;
     alertClass: string;
+    icon: string;
 };
 
 const COMBINED_RESULTS: { [key: string]: ResultDisplay } = {
     YES_undefined: {
         text: "У вас скорее всего есть собственное право на временную защиту в Германии.",
         alertClass: "alert-success",
+        icon: "check-circle-fill",
     },
     NO_undefined: {
         text: "У вас скорее всего нет права на временную защиту в Германии.",
         alertClass: "alert-danger",
+        icon: "x-circle-fill",
     },
     MAYBE_YES: {
         text: "Невозможно предсказать, есть ли у вас собственнное право на временную защиту в Германии, но вы скорее всего сможете получить временную защиту как член семьи обладателей такого права.",
         alertClass: "alert-success",
+        icon: "check-circle-fill",
     },
     MAYBE_MAYBE: {
         text: "Невозможно предсказать, есть ли у вас право на временную защиту в Германии.",
         alertClass: "alert-warning",
+        icon: "exclamation-triangle-fill",
     },
     MAYBE_NO: {
         text: "Невозможно предсказать, есть ли у вас собственное право на временную защиту в Германии. Также вы не можете получить временную защиту как член семьи обладателей такого права.",
         alertClass: "alert-warning",
+        icon: "exclamation-triangle-fill",
     },
     NO_YES: {
         text: "У вас скорее всего нет собственного права на временную защиту в Германии, но вы скорее всего сможете получить временную защиту как член семьи обладателей такого права.",
         alertClass: "alert-success",
+        icon: "check-circle-fill",
     },
     NO_MAYBE: {
         text: "У вас скорее всего нет собственного права на временную защиту в Германии. Ваши шансы получить временную защиту как член семьи обладателей такого права невозможно предсказать.",
         alertClass: "alert-warning",
+        icon: "exclamation-triangle-fill",
     },
     NO_NO: {
         text: "У вас скорее всего нет права на временную защиту в Германии.",
         alertClass: "alert-danger",
+        icon: "x-circle-fill",
     },
 };
 
 const DEFAULT_NOTICES = [
     "Информация, предоставленная здесь, собрана волонтерами. Несмотря на тщательность ее обработки, авторы не могут дать никаких гарантий ее верности. Пользуйтесь этой информацией на свой страх и риск.",
+    '<a href="https://uahelp.wiki/residence-permit/temporary-protection">Информация о временной защите на сайте <span style="white-space: preserve nowrap;"><img src="uahelp-logo-small.svg" style="height: 2ex;" /> UAhelp.Wiki<span></a>',
 ];
 
 const handleAnswer = (event: Event) => {
@@ -173,8 +183,9 @@ function createResult(rd: ResultDisplay) {
     ).content.cloneNode(true) as HTMLElement;
 
     tree.querySelectorAll(".tpc-result-short").forEach((elem) => {
-        elem.innerHTML = rd.text;
         elem.classList.add(rd.alertClass);
+        elem.querySelector("i")!.classList.add("bi", `bi-${rd.icon}`);
+        elem.querySelector("span")!.innerHTML = rd.text;
     });
 
     const denials = getNotices(answers, 1, [Result.NO, Result.MAYBE]).concat(
@@ -185,7 +196,7 @@ function createResult(rd: ResultDisplay) {
         .concat(DEFAULT_NOTICES);
 
     if (denials.length > 0) {
-        tree.querySelectorAll(".tpc-denial-reasons ul").forEach((elem) => {
+        tree.querySelectorAll(" .tpc-denial-reasons ul").forEach((elem) => {
             for (const n of denials) {
                 elem.innerHTML += `<li>${n}</li>`;
             }
