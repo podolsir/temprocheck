@@ -60,7 +60,7 @@ const questions: QuestionData[] = [
                 outcome: {
                     result: Result.YES,
                     notices: [
-                        "Миграционная служба может потребовать документальных доказательств вашего пребывания в Украине по состоянию на 24.02.2022.",
+                        "Миграционная служба может потребовать документальные доказательства вашего пребывания в Украине по состоянию на 24.02.2022.",
                     ],
                 },
                 nextQuestion: () => "stage1-citizenship",
@@ -213,11 +213,11 @@ const questions: QuestionData[] = [
     {
         id: "stage1-citizenship",
         heading: "Гражданство",
-        question: "Укажите свое гражданство или право пребывания в Украине",
+        question: "Какое у вас гражданство?",
         answers: [
             {
                 code: "CITIZENSHIP_UA",
-                long: "Только Украина",
+                long: "Только Украины",
                 short: "Украина",
                 nextQuestion: () => "stage1-secondLocation",
                 outcome: {
@@ -226,9 +226,28 @@ const questions: QuestionData[] = [
                 },
             },
             {
+                code: "CITIZENSHIP_DUAL",
+                long: "Украины и другой страны",
+                short: "Двойное",
+                nextQuestion: () => "stage1-dualCitizenship",
+            },
+            {
+                code: "CITIZENSHIP_OTHER",
+                long: "Только других стран",
+                short: "Другое",
+                nextQuestion: () => "stage1-otherCitizenship",
+            },
+        ],
+    },
+    {
+        id: "stage1-dualCitizenship",
+        heading: "Второе гражданство",
+        question: "Какое у вас гражданство, кроме гражданства Украины?",
+        answers: [
+            {
                 code: "CITIZENSHIP_UA_DUAL_EU",
-                long: "Украина + страна ЕС",
-                short: "Украина + страна ЕС",
+                long: "Страна ЕС",
+                short: "Страна ЕС",
                 nextQuestion: () => "_COMPLETE",
                 outcome: {
                     result: Result.NO,
@@ -238,9 +257,9 @@ const questions: QuestionData[] = [
                 },
             },
             {
-                code: "CITIZENSHIP_UA_DUAL_3C",
-                long: "Украина + страна вне ЕС",
-                short: "Украина + страна вне ЕС",
+                code: "CITIZENSHIP_UA_DUAL_3С",
+                long: "Страна вне ЕС",
+                short: "Страна вне ЕС",
                 nextQuestion: () => "stage1-secondLocation",
                 outcome: {
                     result: Result.MAYBE,
@@ -251,6 +270,13 @@ const questions: QuestionData[] = [
                     ],
                 },
             },
+        ],
+    },
+    {
+        id: "stage1-otherCitizenship",
+        heading: "Страна гражданства",
+        question: "К какой категории относится страна вашего гражданства?",
+        answers: [
             {
                 code: "CITIZENSHIP_EU",
                 long: "Страна ЕС",
@@ -264,9 +290,22 @@ const questions: QuestionData[] = [
                 },
             },
             {
-                code: "CITIZENSHIP_3C_TEMP",
-                long: "Страна вне ЕС и ВНЖ в Украине",
-                short: "Страна вне ЕС и ВНЖ в Украине",
+                code: "CITIZENSHIP_3С",
+                long: "Страна вне ЕС",
+                short: "Страна вне ЕС",
+                nextQuestion: () => "stage1-ukrainePermit",
+            },
+        ],
+    },
+    {
+        id: "stage1-ukrainePermit",
+        heading: "ВНЖ Украины",
+        question: "На основании каких документов вы жили в Украине?",
+        answers: [
+            {
+                code: "UKRAINEPERMIT_TEMP",
+                long: "Временный ВНЖ в Украине",
+                short: "Временный ВНЖ в Украине",
                 nextQuestion: () => "stage1-secondLocation",
                 outcome: {
                     result: Result.NO,
@@ -276,26 +315,52 @@ const questions: QuestionData[] = [
                 },
             },
             {
-                code: "CITIZENSHIP_3C_PERM",
-                long: "Страна вне ЕС и ПМЖ в Украине, действительное по состоянию на 24.02.2022",
-                short: "Страна вне ЕС и ПМЖ в Украине",
-                nextQuestion: () => "stage1-secondLocation",
-                outcome: {
-                    result: Result.YES,
-                    notices: [
-                        "Ваше бессрочное разрешение на проживание в Украине должно было быть действительно на 24.02.2022.",
-                    ],
-                },
+                code: "UKRAINEPERMIT_PERM",
+                long: "Постоянный ВНЖ (ПМЖ) в Украине",
+                short: "ПМЖ в Украине",
+                nextQuestion: () => "stage1-permanentValid2402022",
             },
             {
-                code: "CITIZENSHIP_3C",
-                long: "Страна вне ЕС (нет ПМЖ или ВНЖ Украины)",
-                short: "Страна вне ЕС",
+                code: "UKRAINEPERMIT_NONE",
+                long: "У меня нету таких документов",
+                short: "Нет",
                 nextQuestion: maybeRelatives,
                 outcome: {
                     result: Result.NO,
                     notices: [
                         "Гражданам третьих стран ВНЖ предоставляется только в том случае, если у них есть бессрочное разрешение на пребывание в Украине (ПМЖ).",
+                    ],
+                },
+            },
+        ],
+    },
+    {
+        id: "stage1-permanentValid2402022",
+        heading: "ПМЖ действителен на 24.02.2022",
+        question:
+            "Было ли ваше свидетельство на проживание в Украине действительно по состоянию на 24.02.2022?",
+        answers: [
+            {
+                code: "UKRAINEPERMIT_PERM_VALID",
+                long: "Да",
+                short: "Да",
+                nextQuestion: () => "stage1-secondLocation",
+                outcome: {
+                    result: Result.YES,
+                    notices: [
+                        "Ваше бессрочное разрешение на пребывание (ПМЖ) в Украине должно было быть действительно на 24.02.2022.",
+                    ],
+                },
+            },
+            {
+                code: "UKRAINEPERMIT_PERM_NOTVALID",
+                long: "Нет",
+                short: "Нет",
+                nextQuestion: maybeRelatives,
+                outcome: {
+                    result: Result.NO,
+                    notices: [
+                        "Гражданам третьих стран ВНЖ предоставляется только в том случае, если у них есть бессрочное разрешение на пребывание в Украине (ПМЖ), которое было действительно на 24.02.2022.",
                     ],
                 },
             },
