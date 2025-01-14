@@ -1,4 +1,6 @@
 import { Answer, QuestionData, Result } from "./types";
+import basex from "base-x";
+const alphabet = basex("ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz");
 
 export function runEvaluation(answers: Map<String, Answer>, stage: 1 | 2): Result {
     const arr = Array.from(answers.entries());
@@ -46,6 +48,36 @@ export function getNotices(answers: Map<string, Answer>, stage: 1 | 2, results: 
 
 const maybeRelatives = (answers: Map<string, Answer>) =>
     runEvaluation(answers, 1) == Result.YES ? "_COMPLETE" : "stage2-relatives";
+
+function getIndex(questionId: string, answer: Answer) {
+    const questionIndex = questions.findIndex((q) => q.id == questionId);
+    return {
+        qi: questionIndex,
+        ai: questions[questionIndex].answers.findIndex((a) => a.code == answer.code), 
+    }
+}
+
+export function encodeAnswers(answers: Map<string, Answer>) : string {
+    const arr = Array.from(answers.entries());
+    const result = [];
+    for (const [k, v] of arr) {
+        const {qi, ai} = getIndex(k, v);
+        result.push(qi << 3 + ai);
+    }
+    return alphabet.encode(result);
+}
+
+export function decodeAnswers(encoded: string) : Map<string, Answer> {
+    const result = new Map<string, Answer>();
+    const indices = alphabet.decode(encoded);
+    for (const code of indices) {
+        const qi = code >> 3;
+        const ai = code - (qi << 3);
+        const q = questions[qi];
+        result.set(q.id, q.answers[ai]);
+    }
+    return result;
+}
 
 const questions: QuestionData[] = [
     {

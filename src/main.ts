@@ -1,6 +1,6 @@
 import bootstrap from "bootstrap";
 import { QuestionData, Result, Answer } from "./types";
-import { countAnswers, getNotices, questionIndex, runEvaluation } from "./questions";
+import { countAnswers, decodeAnswers, encodeAnswers, getNotices, questionIndex, runEvaluation } from "./questions";
 
 export function createQuestion(q: QuestionData) {
     const mainElement = document.createElement("div");
@@ -71,7 +71,7 @@ const handleEdit = (event: Event) => {
     new bootstrap.Collapse(target.querySelector(".collapse")!, {
         toggle: false,
     }).show();
-    target.addEventListener("change", handleAnswer);
+    target.addEventListener("change", handleAnswerChange);
     const header = target.querySelector(".tpc-q-header")!;
 
     header.classList.remove("btn", "btn-secondary");
@@ -135,18 +135,25 @@ const DEFAULT_NOTICES = [
     '<a href="https://uahelp.wiki/residence-permit/temporary-protection">Информация о временной защите на сайте <span style="white-space: preserve nowrap;"><img src="uahelp-logo-small.svg" style="height: 2ex;" /> UAhelp.Wiki<span></a>',
 ];
 
-const handleAnswer = (event: Event) => {
-    const target = event.target as HTMLDivElement;
+const handleAnswerChange = (event: Event) => {
+    handleAnswer(event.target as HTMLDivElement, true);
+}
+
+const handleAnswer = (target: HTMLDivElement, processNext: boolean) => {
     const answerCode = target.dataset.tpcSelectedAnswerCode as string;
     const question = questionIndex[target.id];
     const selectedAnswer = question.answers.find((x) => x.code == answerCode)!;
     answers.set(target.id, selectedAnswer);
 
     setIcon(target, "pencil-fill");
-    new bootstrap.Collapse(target.querySelector(".collapse")!, {
-        toggle: false,
-    }).hide();
-    target.removeEventListener("change", handleAnswer);
+    if (processNext) {
+        new bootstrap.Collapse(target.querySelector(".collapse")!, {
+            toggle: false,
+        }).hide();
+    } else {
+        target.querySelector(".collapse")!.classList.remove("show");
+    }
+    target.removeEventListener("change", handleAnswerChange);
     const header = target.querySelector(".tpc-q-header")!;
     header.classList.add("btn", "btn-secondary");
     header.classList.remove("bg-dark-subtle");
@@ -155,12 +162,16 @@ const handleAnswer = (event: Event) => {
     header.querySelector(".tpc-q-heading")!.innerHTML =
         `<small>${question.heading}:</small> ${selectedAnswer.short}`;
 
+    if (!processNext) {
+        return;
+    }
+
     const next = selectedAnswer.nextQuestion(answers);
     if (next != "_COMPLETE") {
         const nq = createQuestion(questionIndex[next]);
         stack.push(nq);
         document.getElementById("questionsContainer")!.appendChild(nq);
-        nq.addEventListener("change", handleAnswer);
+        nq.addEventListener("change", handleAnswerChange);
     } else {
         const stage1result = runEvaluation(answers, 1);
 
@@ -215,16 +226,42 @@ function createResult(rd: ResultDisplay) {
         tree.querySelector(".tpc-notices")!.classList.add("d-none");
     }
 
+    const code = encodeAnswers(answers);
+    const url = new URL(window.location.href);
+    url.hash = "r=1-" + code;
+    history.replaceState(null, "", url);
+    tree.querySelector(".tpc-copy-code")!.addEventListener("click", (evt) => {
+        navigator.clipboard.writeText(url.toString());
+    });
+
     return tree;
 }
 
+
 function clearEvaluation() {
     document.getElementById("resultContainer")!.innerHTML = "";
+    const url = new URL(window.location.href);
+    url.hash = "";
+    history.replaceState(null, "", url);
 }
 
-document.addEventListener("DOMContentLoaded", (e) => {
-    const initialQuestion = createQuestion(questionIndex["stage1-location"]);
-    stack.push(initialQuestion);
-    document.getElementById("questionsContainer")!.appendChild(initialQuestion);
-    initialQuestion.addEventListener("change", handleAnswer);
+document.addEventListener("DOMContentLoaded", () => {
+    const params = Object.fromEntries(new URL(window.location.href).hash.replace("#", "").split("/").map((x) => x.split('=', 2)));
+    const code = params.r as string;
+    if (code && code.startsWith("1-")) {
+        const inputAnswers = decodeAnswers(code.slice(2))
+        for (const [k, v] of inputAnswers.entries()) {
+            const questionElement = createQuestion(questionIndex[k]);
+            stack.push(questionElement);
+            document.getElementById("questionsContainer")!.appendChild(questionElement);
+            questionElement.dataset.tpcSelectedAnswerCode = v.code;
+            handleAnswer(questionElement, false);
+        }
+        handleAnswer(stack[stack.length - 1], true);
+    } else {
+        const initialQuestion = createQuestion(questionIndex["stage1-location"]);
+        stack.push(initialQuestion);
+        document.getElementById("questionsContainer")!.appendChild(initialQuestion);
+        initialQuestion.addEventListener("change", handleAnswerChange);
+    }
 });
