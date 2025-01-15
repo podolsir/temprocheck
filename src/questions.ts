@@ -53,21 +53,21 @@ function getIndex(questionId: string, answer: Answer) {
     const questionIndex = questions.findIndex((q) => q.id == questionId);
     return {
         qi: questionIndex,
-        ai: questions[questionIndex].answers.findIndex((a) => a.code == answer.code), 
-    }
+        ai: questions[questionIndex].answers.findIndex((a) => a.code == answer.code),
+    };
 }
 
-export function encodeAnswers(answers: Map<string, Answer>) : string {
+export function encodeAnswers(answers: Map<string, Answer>): string {
     const arr = Array.from(answers.entries());
     const result = [];
     for (const [k, v] of arr) {
-        const {qi, ai} = getIndex(k, v);
+        const { qi, ai } = getIndex(k, v);
         result.push((qi << 3) + ai);
     }
     return alphabet.encode(result);
 }
 
-export function decodeAnswers(encoded: string) : Map<string, Answer> {
+export function decodeAnswers(encoded: string): Map<string, Answer> {
     const result = new Map<string, Answer>();
     const indices = alphabet.decode(encoded);
     for (const code of indices) {

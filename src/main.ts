@@ -1,6 +1,13 @@
 import bootstrap from "bootstrap";
 import { QuestionData, Result, Answer } from "./types";
-import { countAnswers, decodeAnswers, encodeAnswers, getNotices, questionIndex, runEvaluation } from "./questions";
+import {
+    countAnswers,
+    decodeAnswers,
+    encodeAnswers,
+    getNotices,
+    questionIndex,
+    runEvaluation,
+} from "./questions";
 
 export function createQuestion(q: QuestionData) {
     const mainElement = document.createElement("div");
@@ -137,7 +144,7 @@ const DEFAULT_NOTICES = [
 
 const handleAnswerChange = (event: Event) => {
     handleAnswer(event.target as HTMLDivElement, true);
-}
+};
 
 const handleAnswer = (target: HTMLDivElement, processNext: boolean) => {
     const answerCode = target.dataset.tpcSelectedAnswerCode as string;
@@ -237,7 +244,6 @@ function createResult(rd: ResultDisplay) {
     return tree;
 }
 
-
 function clearEvaluation() {
     document.getElementById("resultContainer")!.innerHTML = "";
     const url = new URL(window.location.href);
@@ -246,13 +252,18 @@ function clearEvaluation() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    const params = Object.fromEntries(new URL(window.location.href).hash.replace("#", "").split("/").map((x) => x.split('=', 2)));
+    const params = Object.fromEntries(
+        new URL(window.location.href).hash
+            .replace("#", "")
+            .split("/")
+            .map((x) => x.split("=", 2)),
+    );
     const code = params.r as string;
     let decodeSuccess = false;
 
     if (code && code.startsWith("1-")) {
         try {
-            const inputAnswers = decodeAnswers(code.slice(2))
+            const inputAnswers = decodeAnswers(code.slice(2));
             for (const [k, v] of inputAnswers.entries()) {
                 const questionElement = createQuestion(questionIndex[k]);
                 stack.push(questionElement);
