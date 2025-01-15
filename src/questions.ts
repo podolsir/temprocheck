@@ -30,9 +30,8 @@ export function countAnswers(answers: Map<string, Answer>, stage: 1 | 2) {
 }
 
 export function getNotices(answers: Map<string, Answer>, stage: 1 | 2, results: Result[]) {
-    const arr = Array.from(answers.entries());
     const notices = [];
-    for (const [k, v] of arr) {
+    for (const [k, v] of answers) {
         if (!k.startsWith(`stage${stage}-`)) {
             continue;
         }
@@ -58,9 +57,8 @@ function getIndex(questionId: string, answer: Answer) {
 }
 
 export function encodeAnswers(answers: Map<string, Answer>): string {
-    const arr = Array.from(answers.entries());
     const result = [];
-    for (const [k, v] of arr) {
+    for (const [k, v] of answers) {
         const { qi, ai } = getIndex(k, v);
         result.push((qi << 3) + ai);
     }
