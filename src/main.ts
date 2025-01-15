@@ -248,17 +248,25 @@ function clearEvaluation() {
 document.addEventListener("DOMContentLoaded", () => {
     const params = Object.fromEntries(new URL(window.location.href).hash.replace("#", "").split("/").map((x) => x.split('=', 2)));
     const code = params.r as string;
+    let decodeSuccess = false;
+
     if (code && code.startsWith("1-")) {
-        const inputAnswers = decodeAnswers(code.slice(2))
-        for (const [k, v] of inputAnswers.entries()) {
-            const questionElement = createQuestion(questionIndex[k]);
-            stack.push(questionElement);
-            document.getElementById("questionsContainer")!.appendChild(questionElement);
-            questionElement.dataset.tpcSelectedAnswerCode = v.code;
-            handleAnswer(questionElement, false);
+        try {
+            const inputAnswers = decodeAnswers(code.slice(2))
+            for (const [k, v] of inputAnswers.entries()) {
+                const questionElement = createQuestion(questionIndex[k]);
+                stack.push(questionElement);
+                document.getElementById("questionsContainer")!.appendChild(questionElement);
+                questionElement.dataset.tpcSelectedAnswerCode = v.code;
+                handleAnswer(questionElement, false);
+            }
+            handleAnswer(stack[stack.length - 1], true);
+            decodeSuccess = true;
+        } catch (error) {
+            // Do nothing.
         }
-        handleAnswer(stack[stack.length - 1], true);
-    } else {
+    }
+    if (!decodeSuccess) {
         const initialQuestion = createQuestion(questionIndex["stage1-location"]);
         stack.push(initialQuestion);
         document.getElementById("questionsContainer")!.appendChild(initialQuestion);
