@@ -62,7 +62,7 @@ export function encodeAnswers(answers: Map<string, Answer>) : string {
     const result = [];
     for (const [k, v] of arr) {
         const {qi, ai} = getIndex(k, v);
-        result.push(qi << 3 + ai);
+        result.push((qi << 3) + ai);
     }
     return alphabet.encode(result);
 }
