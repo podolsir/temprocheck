@@ -405,7 +405,7 @@ const questions: QuestionData[] = [
     {
         id: "stage1-secondLocation",
         heading: "Страны вне ЕС",
-        question: "Проживали ли вы после 24 февраля 2022 в любых странах кроме Украины и ЕС?",
+        question: "Проживали ли вы после 24 февраля 2022 в любых странах кроме Украины и стран ЕС?",
         answers: [
             {
                 code: "LOCATION2_EU_UA",
