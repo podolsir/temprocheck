@@ -146,7 +146,7 @@ const handleAnswerChange = (event: Event) => {
     handleAnswer(event.target as HTMLDivElement, true);
 };
 
-const handleAnswer = (target: HTMLDivElement, processNext: boolean) => {
+const handleAnswer = (target: HTMLDivElement, processNext: boolean, legacy: boolean = false) => {
     const answerCode = target.dataset.tpcSelectedAnswerCode as string;
     const question = questionIndex[target.id];
     const selectedAnswer = question.answers.find((x) => x.code == answerCode)!;
@@ -191,11 +191,11 @@ const handleAnswer = (target: HTMLDivElement, processNext: boolean) => {
 
         const rc = document.getElementById("resultContainer")!;
 
-        rc.appendChild(createResult(COMBINED_RESULTS[key]));
+        rc.appendChild(createResult(COMBINED_RESULTS[key], legacy));
     }
 };
 
-function createResult(rd: ResultDisplay) {
+function createResult(rd: ResultDisplay, legacy: boolean) {
     const tree = (
         document.getElementById("resultTemplate") as HTMLTemplateElement
     ).content.cloneNode(true) as HTMLElement;
@@ -233,13 +233,16 @@ function createResult(rd: ResultDisplay) {
         tree.querySelector(".tpc-notices")!.classList.add("d-none");
     }
 
-    const code = encodeAnswers(answers);
-    const url = new URL(window.location.href);
-    url.hash = "r=1-" + code;
-    history.replaceState(null, "", url);
-    tree.querySelector(".tpc-copy-code")!.addEventListener("click", (evt) => {
-        navigator.clipboard.writeText(url.toString());
-    });
+    if (!legacy) {
+        const code = encodeAnswers(answers);
+        const url = new URL(window.location.href);
+        url.hash = "r=1-" + code;
+        history.replaceState(null, "", url);
+        tree.querySelector(".tpc-copy-code")!.addEventListener("click", (evt) => {
+            navigator.clipboard.writeText(url.toString());
+        });
+    }
+    tree.querySelector(".tpc-start-over")!.addEventListener("click", startOver);
 
     return tree;
 }
@@ -249,6 +252,20 @@ function clearEvaluation() {
     const url = new URL(window.location.href);
     url.hash = "";
     history.replaceState(null, "", url);
+}
+
+function startOver() {
+    clearEvaluation();
+    stack.splice(0, stack.length);
+    document.getElementById("questionsContainer")!.innerHTML = "";
+    initialize();
+}
+
+function initialize() {
+    const initialQuestion = createQuestion(questionIndex["stage1-location"]);
+    stack.push(initialQuestion);
+    document.getElementById("questionsContainer")!.appendChild(initialQuestion);
+    initialQuestion.addEventListener("change", handleAnswerChange);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -278,9 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
     if (!decodeSuccess) {
-        const initialQuestion = createQuestion(questionIndex["stage1-location"]);
-        stack.push(initialQuestion);
-        document.getElementById("questionsContainer")!.appendChild(initialQuestion);
-        initialQuestion.addEventListener("change", handleAnswerChange);
+        initialize();
     }
 });
