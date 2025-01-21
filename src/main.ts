@@ -5,9 +5,9 @@ import {
     decodeAnswers,
     encodeAnswers,
     getNotices,
-    questionIndex,
     runEvaluation,
-} from "./questions";
+} from "./evaluation";
+import { questionIndex, questions as defaultQuestions } from "./questions1";
 
 export function createQuestion(q: QuestionData) {
     const mainElement = document.createElement("div");
@@ -146,7 +146,7 @@ const handleAnswerChange = (event: Event) => {
     handleAnswer(event.target as HTMLDivElement, true);
 };
 
-const handleAnswer = (target: HTMLDivElement, processNext: boolean, legacy: boolean = false) => {
+const handleAnswer = (target: HTMLDivElement, processNext: boolean, questionList: QuestionData[] = defaultQuestions) => {
     const answerCode = target.dataset.tpcSelectedAnswerCode as string;
     const question = questionIndex[target.id];
     const selectedAnswer = question.answers.find((x) => x.code == answerCode)!;
@@ -191,11 +191,11 @@ const handleAnswer = (target: HTMLDivElement, processNext: boolean, legacy: bool
 
         const rc = document.getElementById("resultContainer")!;
 
-        rc.appendChild(createResult(COMBINED_RESULTS[key], legacy));
+        rc.appendChild(createResult(COMBINED_RESULTS[key], questionList));
     }
 };
 
-function createResult(rd: ResultDisplay, legacy: boolean) {
+function createResult(rd: ResultDisplay, questionList: QuestionData[]) {
     const tree = (
         document.getElementById("resultTemplate") as HTMLTemplateElement
     ).content.cloneNode(true) as HTMLElement;
@@ -233,8 +233,8 @@ function createResult(rd: ResultDisplay, legacy: boolean) {
         tree.querySelector(".tpc-notices")!.classList.add("d-none");
     }
 
-    if (!legacy) {
-        const code = encodeAnswers(answers);
+    if (questionList == defaultQuestions) {
+        const code = encodeAnswers(questionList, answers);
         const url = new URL(window.location.href);
         url.hash = "r=1-" + code;
         history.replaceState(null, "", url);
@@ -280,15 +280,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (code && code.startsWith("1-")) {
         try {
-            const inputAnswers = decodeAnswers(code.slice(2));
+            const inputAnswers = decodeAnswers(defaultQuestions, code.slice(2));
             for (const [k, v] of inputAnswers.entries()) {
                 const questionElement = createQuestion(questionIndex[k]);
                 stack.push(questionElement);
                 document.getElementById("questionsContainer")!.appendChild(questionElement);
                 questionElement.dataset.tpcSelectedAnswerCode = v.code;
-                handleAnswer(questionElement, false);
+                handleAnswer(questionElement, false, defaultQuestions);
             }
-            handleAnswer(stack[stack.length - 1], true);
+            handleAnswer(stack[stack.length - 1], true, defaultQuestions);
             decodeSuccess = true;
         } catch (error) {
             // Do nothing.
