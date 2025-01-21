@@ -7,7 +7,8 @@ import {
     getNotices,
     runEvaluation,
 } from "./evaluation";
-import { questionIndex, questions as defaultQuestions } from "./questions1";
+import { questionIndex as questionIndex1, questions as questions1 } from "./questions1";
+import { questionIndex as defaultQuestionIndex, questions as defaultQuestions } from "./questions2";
 
 export function createQuestion(q: QuestionData) {
     const mainElement = document.createElement("div");
@@ -62,7 +63,7 @@ const handleEdit = (event: Event) => {
     clearEvaluation();
 
     const mainElement = (event.target as HTMLElement).closest(".tpc-question")!;
-    const question = questionIndex[mainElement.id];
+    const question = defaultQuestionIndex[mainElement.id];
 
     let index = stack.length - 1;
     while (index > 0 && stack[index].id != mainElement.id) {
@@ -146,13 +147,12 @@ const handleAnswerChange = (event: Event) => {
     handleAnswer(event.target as HTMLDivElement, true);
 };
 
-const handleAnswer = (target: HTMLDivElement, processNext: boolean, questionList: QuestionData[] = defaultQuestions) => {
+const handleAnswer = (target: HTMLDivElement, processNext: boolean, questionList = defaultQuestions, questionIndex = defaultQuestionIndex, editable = true) => {
     const answerCode = target.dataset.tpcSelectedAnswerCode as string;
     const question = questionIndex[target.id];
     const selectedAnswer = question.answers.find((x) => x.code == answerCode)!;
     answers.set(target.id, selectedAnswer);
 
-    setIcon(target, "pencil-fill");
     if (processNext) {
         new bootstrap.Collapse(target.querySelector(".collapse")!, {
             toggle: false,
@@ -165,7 +165,12 @@ const handleAnswer = (target: HTMLDivElement, processNext: boolean, questionList
     header.classList.add("btn", "btn-secondary");
     header.classList.remove("bg-dark-subtle");
     target.classList.remove("border");
-    header.addEventListener("click", handleEdit);
+    if (editable) {
+        setIcon(target, "pencil-fill");
+        header.addEventListener("click", handleEdit);
+    } else {
+        header.classList.add("disabled");
+    }
     header.querySelector(".tpc-q-heading")!.innerHTML =
         `<small>${question.heading}:</small> ${selectedAnswer.short}`;
 
@@ -236,11 +241,12 @@ function createResult(rd: ResultDisplay, questionList: QuestionData[]) {
     if (questionList == defaultQuestions) {
         const code = encodeAnswers(questionList, answers);
         const url = new URL(window.location.href);
-        url.hash = "r=1-" + code;
+        url.hash = "r=2-" + code;
         history.replaceState(null, "", url);
         tree.querySelector(".tpc-copy-code")!.addEventListener("click", (evt) => {
             navigator.clipboard.writeText(url.toString());
         });
+        tree.querySelector(".tpc-copy-code")!.classList.remove("d-none");
     }
     tree.querySelector(".tpc-start-over")!.addEventListener("click", startOver);
 
@@ -262,7 +268,7 @@ function startOver() {
 }
 
 function initialize() {
-    const initialQuestion = createQuestion(questionIndex["stage1-location"]);
+    const initialQuestion = createQuestion(defaultQuestionIndex["stage1-location"]);
     stack.push(initialQuestion);
     document.getElementById("questionsContainer")!.appendChild(initialQuestion);
     initialQuestion.addEventListener("change", handleAnswerChange);
@@ -278,17 +284,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const code = params.r as string;
     let decodeSuccess = false;
 
-    if (code && code.startsWith("1-")) {
+    if (code && (code.startsWith("1-") || code.startsWith("2-"))) {
+        let qi = defaultQuestionIndex;
+        let q = defaultQuestions;
+        let legacy = false;
+        if (code.startsWith("1-")) {
+            qi = questionIndex1;
+            q = questions1;
+            legacy = true;
+        }
         try {
-            const inputAnswers = decodeAnswers(defaultQuestions, code.slice(2));
+            const inputAnswers = decodeAnswers(q, code.slice(2));
             for (const [k, v] of inputAnswers.entries()) {
-                const questionElement = createQuestion(questionIndex[k]);
+                const questionElement = createQuestion(qi[k]);
                 stack.push(questionElement);
                 document.getElementById("questionsContainer")!.appendChild(questionElement);
                 questionElement.dataset.tpcSelectedAnswerCode = v.code;
-                handleAnswer(questionElement, false, defaultQuestions);
+                handleAnswer(questionElement, false, q, qi, !legacy);
             }
-            handleAnswer(stack[stack.length - 1], true, defaultQuestions);
+            handleAnswer(stack[stack.length - 1], true, q, qi, !legacy);
             decodeSuccess = true;
         } catch (error) {
             // Do nothing.
