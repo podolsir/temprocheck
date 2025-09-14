@@ -147,7 +147,13 @@ const handleAnswerChange = (event: Event) => {
     handleAnswer(event.target as HTMLDivElement, true);
 };
 
-const handleAnswer = (target: HTMLDivElement, processNext: boolean, questionList = defaultQuestions, questionIndex = defaultQuestionIndex, editable = true) => {
+const handleAnswer = (
+    target: HTMLDivElement,
+    processNext: boolean,
+    questionList = defaultQuestions,
+    questionIndex = defaultQuestionIndex,
+    editable = true,
+) => {
     const answerCode = target.dataset.tpcSelectedAnswerCode as string;
     const question = questionIndex[target.id];
     const selectedAnswer = question.answers.find((x) => x.code == answerCode)!;
